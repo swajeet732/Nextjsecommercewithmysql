@@ -1,24 +1,29 @@
 // models/Order.js
 
-const mongoose = require('mongoose');
+import { DataTypes } from 'sequelize';
+import sequelize from '../utils/db'; // Import your database connection
+import Product from './Product'; // Import Product model
 
-const orderSchema = new mongoose.Schema({
-    products: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product'
-    }],
-    totalPrice: {
-        type: Number,
-        required: true
-    },
-    email: { type: String, required: true },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
+const Order = sequelize.define('Order', {
+  products: {
+    type: DataTypes.JSONB, // Storing product references as JSON array
+    allowNull: false,
+  },
+  totalPrice: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+}, {
+  timestamps: true, // Automatically adds createdAt and updatedAt fields
+  tableName: 'orders', // Optional: specify the table name if you want to override the default pluralized table name
 });
 
-const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
+// Define many-to-many relationship between Order and Product models
+Order.belongsToMany(Product, { through: 'OrderProduct' });
+Product.belongsToMany(Order, { through: 'OrderProduct' });
 
-
-module.exports = Order;
+export default Order;

@@ -9,6 +9,9 @@ const OrdersPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false); 
+    const [page, setPage] = useState(0); // Current page number
+    const [limit] = useState(2); // Records per page
+    const [totalOrders, setTotalOrders] = useState(0); // Total number of orders (for pagination)
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -20,8 +23,9 @@ const OrdersPage = () => {
             }
 
             try {
-                const res = await axios.get(`http://localhost:3000/api/getorders?email=${email}`);
-                setOrders(res.data);
+                const res = await axios.get(`http://localhost:3000/api/getorders?email=${email}&limit=${limit}&page=${page}`);
+                setOrders(res.data.orders);
+                setTotalOrders(res.data.pagination.totalOrders);
                 setLoading(false);
             } catch (error) {
                 setError('Error fetching orders.');
@@ -30,7 +34,21 @@ const OrdersPage = () => {
         };
 
         fetchOrders();
-    }, []);
+    }, [page, limit]); // Fetch orders when `page` or `limit` changes
+
+    const totalPages = Math.ceil(totalOrders / limit); // Calculate total pages based on totalOrders
+
+    const handleNextPage = () => {
+        if (page < totalPages - 1) {
+            setPage(page + 1);
+        }
+    };
+
+    const handlePreviousPage = () => {
+        if (page > 0) {
+            setPage(page - 1);
+        }
+    };
 
     if (loading) {
         return <p className="text-center mt-10 text-xl">Loading...</p>;
@@ -67,6 +85,25 @@ const OrdersPage = () => {
                         ))}
                     </ul>
                 )}
+
+                {/* Pagination Controls */}
+                <div className="flex justify-between mt-8">
+                    <button 
+                        onClick={handlePreviousPage} 
+                        disabled={page === 0}
+                        className="bg-gray-300 p-2 rounded-md text-sm"
+                    >
+                        Previous
+                    </button>
+                    <span className="text-lg">{`Page ${page + 1} of ${totalPages}`}</span>
+                    <button 
+                        onClick={handleNextPage} 
+                        disabled={page === totalPages - 1}
+                        className="bg-gray-300 p-2 rounded-md text-sm"
+                    >
+                        Next
+                    </button>
+                </div>
             </div>
         </div>
     );

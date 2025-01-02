@@ -1,50 +1,47 @@
-// models/Customer.js
+import { DataTypes } from 'sequelize';
+import sequelize from '../utils/db'; // Import your database connection
 
-const mongoose = require('mongoose');
-
-const customerSchema = new mongoose.Schema({
+const Customer = sequelize.define('Customer', {
   firstName: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   lastName: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   email: {
-    type: String,
-    required: true,
-    unique: true, // Ensures each email is unique
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
   },
- 
   address: {
-    type: String,
-    required: true,
+    type: DataTypes.TEXT,
+    allowNull: false,
   },
   city: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   state: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   zipCode: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   country: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   phone: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-}, { timestamps: true });
+}, {
+  timestamps: true, // Automatically adds createdAt and updatedAt fields
+  tableName: 'customers', // Optional: specify the table name if you want to override default pluralized table name
+});
 
-module.exports = mongoose.models.Customer || mongoose.model('Customer', customerSchema);
+export default Customer;

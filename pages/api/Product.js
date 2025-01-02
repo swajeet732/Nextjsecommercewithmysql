@@ -28,17 +28,37 @@ async function getProducts(req, res) {
   }
 }
 
+
 async function createProduct(req, res) {
   const connection = await connectDB();
   try {
-    const { name, price, description, category, imageUrl } = req.body;
-    const [result] = await connection.query('INSERT INTO products (name, price, description, category, imageUrl) VALUES (?, ?, ?, ?, ?)', [name, price, description, category, imageUrl]);
-    res.status(201).json({ id: result.insertId, name, price, description, category, imageUrl });
+    const { name, price, description, category, imageUrl, stock } = req.body;
+
+    // Validate required fields
+    if (!name || !price || !description || !category || !stock) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const [result] = await connection.query(
+      'INSERT INTO products (name, price, description, category, imageUrl, stock) VALUES (?, ?, ?, ?, ?, ?)', 
+      [name, price, description, category, imageUrl, stock]
+    );
+
+    res.status(201).json({
+      id: result.insertId,
+      name,
+      price,
+      description,
+      category,
+      imageUrl,
+      stock
+    });
   } catch (error) {
     console.error('Create product error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 }
+
 
 async function updateProduct(req, res) {
   const connection = await connectDB();

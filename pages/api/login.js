@@ -54,18 +54,14 @@ async function handleLogin({ email, password }, res) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Server error' });
   } finally {
-    connection.end();
+    // Don't close the connection explicitly, as we are using connection pooling
+    // Connection pooling handles connection management automatically
   }
 }
 
-async function handleUpdatePassword({ email, currentPassword, newPassword }, res) {
+async function handleUpdatePassword({ email, newPassword }, res) {
   const connection = await connectDB();
   try {
-    if (!newPassword) {
-      return res.status(400).json({ error: 'New password is required' });
-    }
-
-    // Find user by email
     const [rows] = await connection.execute('SELECT * FROM users WHERE email = ?', [email]);
     const user = rows[0];
 
@@ -73,32 +69,24 @@ async function handleUpdatePassword({ email, currentPassword, newPassword }, res
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Validate current password
-    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid current password' });
-    }
-
     // Hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update user's password
+    // Update the password in the database
     await connection.execute('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, user.id]);
 
     res.status(200).json({ message: 'Password updated successfully' });
   } catch (err) {
     console.error('Update password error:', err);
     res.status(500).json({ error: 'Server error' });
-  } finally {
-    connection.end();
   }
 }
 
-async function handleGetUserDetails({ email }, res) {
+async function handleGetUserDetails({ token }, res) {
   const connection = await connectDB();
   try {
-    // Find user by email
-    const [rows] = await connection.execute('SELECT * FROM users WHERE email = ?', [email]);
+    // Find user by token
+    const [rows] = await connection.execute('SELECT * FROM users WHERE token = ?', [token]);
     const user = rows[0];
 
     if (!user) {
@@ -109,7 +97,5 @@ async function handleGetUserDetails({ email }, res) {
   } catch (err) {
     console.error('Get user details error:', err);
     res.status(500).json({ error: 'Server error' });
-  } finally {
-    connection.end();
   }
 }

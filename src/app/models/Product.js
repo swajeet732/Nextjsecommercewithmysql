@@ -1,37 +1,34 @@
-// models/Product.js
+import { DataTypes } from 'sequelize';
+import sequelize from '../utils/db'; // Import your database connection
 
-const mongoose = require('mongoose');
-
-const productSchema = new mongoose.Schema({
+const Product = sequelize.define('Product', {
   name: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   description: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   price: {
-    type: Number,
-    required: true,
+    type: DataTypes.FLOAT,
+    allowNull: false,
   },
   category: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   stock: {
-    type: Number,
-    required: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
   },
   imageUrl: {
-    type: String,
-    //required: true,
+    type: DataTypes.STRING,
+    allowNull: true, // Not required
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-}, { timestamps: true });
+}, {
+  timestamps: true, // Automatically adds createdAt and updatedAt fields
+  tableName: 'products', // Optional: specify the table name if you want to override default pluralized table name
+});
 
-export default mongoose.models.Product || mongoose.model('Product', productSchema);
-
+export default Product;

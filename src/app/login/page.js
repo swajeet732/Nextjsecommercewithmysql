@@ -4,7 +4,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import '../styles/globals.css'
+import Link from 'next/link';
+import '../styles/globals.css';
+
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -85,6 +87,13 @@ const LoginForm = () => {
         </button>
 
         {error && <p className="text-red-500 mt-2">{error}</p>}
+
+        <p className="mt-4 text-center">
+          Don't have an account?{' '}
+          <Link href="/signup" className="text-blue-500 hover:underline">
+            Sign up
+          </Link>
+        </p>
       </form>
     </div>
   );

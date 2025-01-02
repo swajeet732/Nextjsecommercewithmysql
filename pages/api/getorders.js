@@ -2,74 +2,60 @@ import connectDB from "@/app/utils/db";
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
-    const { email } = req.query;
+    const { email, limit = 10, page = 0 } = req.query;
 
+    // Ensure the email parameter is provided
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
     }
 
     try {
-      // Connect to the database
+      // Parse limit and page into integers
+      const parsedLimit = parseInt(limit, 10);
+      const parsedPage = parseInt(page, 10);
+
+      // Check if parsedLimit and parsedPage are valid numbers
+      if (isNaN(parsedLimit) || isNaN(parsedPage)) {
+        return res.status(400).json({ error: 'Invalid limit or page value' });
+      }
+
       const connection = await connectDB();
 
-      // Fetch orders
-      const [orders] = await connection.execute(
-        `SELECT 
+      // Fetch total count of orders
+      const totalOrdersQuery = `SELECT COUNT(*) AS totalOrders FROM orders WHERE email = '${email}'`;
+      const [totalOrdersResult] = await connection.execute(totalOrdersQuery);
+      const totalOrders = totalOrdersResult[0].totalOrders;
+
+      // Fetch orders with pagination
+      const ordersQuery = `SELECT 
           id AS orderId, 
           totalPrice, 
           createdAt 
         FROM 
           orders 
         WHERE 
-          email = ?`,
-        [email]
-      );
+          email = '${email}' 
+        LIMIT ${parsedLimit} OFFSET ${parsedPage * parsedLimit}`;
+      
+      const [orders] = await connection.execute(ordersQuery);
 
-      // Fetch products associated with these orders
-      const orderIds = orders.map(order => order.orderId);
-      if (orderIds.length === 0) {
-        return res.status(200).json(orders);
+      if (orders.length === 0) {
+        return res.status(200).json({ orders, pagination: { limit: parsedLimit, page: parsedPage, totalOrders } });
       }
 
-      const [products] = await connection.execute(
-        `SELECT 
-          p.id AS productId, 
-          p.name AS productName, 
-          p.price AS productPrice, 
-          op.orderId
-        FROM 
-          products p
-        JOIN 
-          order_products op ON p.id = op.productId
-        WHERE 
-          op.orderId IN (?)`,
-        [orderIds]
-      );
+      // Respond only with totalPrice for each order
+      const orderSummary = orders.map(order => ({
+        totalPrice: order.totalPrice,
+      }));
 
-      // Combine orders with their products
-      const orderMap = {};
-
-      orders.forEach(order => {
-        orderMap[order.orderId] = {
-          ...order,
-          products: []
-        };
-      });
-
-      products.forEach(product => {
-        if (orderMap[product.orderId]) {
-          orderMap[product.orderId].products.push({
-            id: product.productId,
-            name: product.productName,
-            price: product.productPrice
-          });
+      res.status(200).json({
+        orders: orderSummary,
+        pagination: {
+          limit: parsedLimit,
+          page: parsedPage,
+          totalOrders,
         }
       });
-
-      const formattedOrders = Object.values(orderMap);
-
-      // Return the orders with products as JSON
-      res.status(200).json(formattedOrders);
     } catch (error) {
       console.error('Error fetching orders:', error);
       res.status(500).json({ error: 'Error fetching orders' });
